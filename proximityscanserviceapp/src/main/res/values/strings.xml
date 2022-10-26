@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">ProximityScanService</string>
+    <string name="foreground_service_notification_title">ProximityScanService</string>
+    <string name="foreground_service_notification_text">A service that runs in foreground.</string>
+    <string name="foreground_service_notification_tickle">ProximityScanService</string>
+    <string name="serviceStopped">Service is stopped</string>
+    <string name="serviceStarted">Service is running</string>
+    <string name="startOnBoot">Start on boot</string>
+    <string name="doNothingOnBoot">Do nothing on boot</string>
+    <string name="startOnCharging">Start when charging \nStop when not charging</string>
+    <string name="doNothingOnCharging">Power events not\nmonitored</string>
+    <string name="foreground_service_channel_name">Proximity Scan Service</string>
+    <string name="foreground_service_channel_id">Proximity Scan Service channel</string>
+    <string name="appdescription">Proximity Scan Service is a service that runs in foreground.\nService can be started with adb:\nadb shell am broadcast -a com.zebra.proximityscanservice.startservice\nService can be stopped with adb:\nadb shell am broadcast -a com.zebra.proximityscanservice.stopservice</string>
+    <string name="powereventswatcherservice_channel_name">Proximity Scan Service</string>
+    <string name="powereventswatcherservice_channel_id">-Proximity Scan Service channel</string>
+    <string name="powereventswatcherservice_notification_title">Proximity Scan Service Power Events Watcher</string>
+    <string name="powereventswatcherservice_notification_text">A service that watch for power events (docked, charging) to start or stop Proximity Scan Service.</string>
+    <string name="powereventswatcherservice_notification_tickle">Proximity ScanService Power Events Watcher</string>
+
+</resources>
