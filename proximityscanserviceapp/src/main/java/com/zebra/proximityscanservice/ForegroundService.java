@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventCallback;
@@ -35,11 +36,13 @@ import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 public class ForegroundService extends Service {
     private static final int SERVICE_ID = 1;
 
-    private NotificationManager mNotificationManager;
-    private Notification mNotification;
-    private SensorManager sensorManager = null;
-    private Sensor proximitySensor = null;
-    private SensorEventCallback sensorEventCallback = null;
+    private NotificationManager mNotificationManager = null;
+    private Notification mNotification = null;
+    private static ProximitySensorModule proximitySensorModule = null;
+    private static DWDistanceScanTrigger dwDistanceScanTrigger = null;
+
+    private String mSensorName = null;
+    private int mProximityMinDistance = Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE;
 
     public ForegroundService() {
     }
@@ -51,12 +54,12 @@ public class ForegroundService extends Service {
 
     public void onCreate()
     {
-        logD("onCreate");
+        LogHelper.logD("onCreate");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        logD("onStartCommand");
+        LogHelper.logD("onStartCommand");
         super.onStartCommand(intent, flags, startId);
         startService();
         return Service.START_STICKY;
@@ -64,14 +67,14 @@ public class ForegroundService extends Service {
 
     public void onDestroy()
     {
-        logD("onDestroy");
+        LogHelper.logD("onDestroy");
         stopService();
     }
 
     @SuppressLint({"Wakelock"})
     private void startService()
     {
-        logD("startService");
+        LogHelper.logD("startService");
         try
         {
             if(mNotificationManager == null)
@@ -104,78 +107,40 @@ public class ForegroundService extends Service {
             // Start foreground service
             startForeground(SERVICE_ID, mNotification);
 
-            // Initialize functional things here
-            if(sensorManager == null)
-                sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            // Do your service stuffs here :)
+            SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
-            if(sensorManager != null){
-
-                if(proximitySensor == null) {
-                    List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);
-                    for(Sensor sensor : list)
-                    {
-                        if(sensor.getName().equalsIgnoreCase("LONGDISTANCEPROX"))
-                        {
-                            proximitySensor = sensor;
-                        }
-                    }
-                }
-
-                if (proximitySensor != null) {
-
-                    if (sensorEventCallback == null) {
-
-                        sensorEventCallback = new SensorEventCallback() {
-                            @Override
-                            public void onSensorChanged(SensorEvent event) {
-                                super.onSensorChanged(event);
-                                processSensorEvent(event);
-                            }
-                        };
-                    }
-                    sensorManager.registerListener(sensorEventCallback, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
-                }
+            mProximityMinDistance = sharedpreferences.getInt(Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE, Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE);
+            if(dwDistanceScanTrigger == null)
+            {
+                dwDistanceScanTrigger = new DWDistanceScanTrigger(this, mProximityMinDistance);
+            }
+            else
+            {
+                dwDistanceScanTrigger.setMinDistance(mProximityMinDistance);
             }
 
-            logD("startService:Service started without error.");
+           mSensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+
+            if(proximitySensorModule != null)
+            {
+                // Reset sensor
+                proximitySensorModule.stop();
+                proximitySensorModule = null;
+            }
+
+            if(proximitySensorModule == null)
+                proximitySensorModule = new ProximitySensorModule(this, mSensorName, dwDistanceScanTrigger);
+
+            proximitySensorModule.start();
+            dwDistanceScanTrigger.start();
+
+            LogHelper.logD("startService:Service started without error.");
         }
         catch(Exception e)
         {
-            logD("startService:Error while starting service.");
+            LogHelper.logD("startService:Error while starting service.");
             e.printStackTrace();
-        }
-    }
-
-    private void processSensorEvent(SensorEvent event) {
-        float distance = event.values[0];
-        logD("Distance: " + distance);
-
-        if(distance > Constants.MIN_DISTANCE_TO_TRIGGER_SCAN ) {
-            DWScannerStartScan startScan = new DWScannerStartScan(ForegroundService.this);
-            DWProfileBaseSettings baseSettings = new DWProfileBaseSettings();
-            startScan.execute(baseSettings, new DWProfileCommandBase.onProfileCommandResult() {
-                @Override
-                public void result(String profileName, String action, String command, String result, String resultInfo, String commandidentifier) {
-                }
-
-                @Override
-                public void timeout(String profileName) {
-                }
-            });
-        }
-        else if(distance < Constants.MIN_DISTANCE_TO_TRIGGER_SCAN)
-        {
-            DWScannerStopScan stopScan = new DWScannerStopScan(ForegroundService.this);
-            DWProfileBaseSettings baseSettings = new DWProfileBaseSettings();
-            stopScan.execute(baseSettings, new DWProfileCommandBase.onProfileCommandResult() {
-                @Override
-                public void result(String profileName, String action, String command, String result, String resultInfo, String commandidentifier) {
-                }
-
-                @Override
-                public void timeout(String profileName) {
-                }
-            });
         }
     }
 
@@ -183,7 +148,7 @@ public class ForegroundService extends Service {
     {
         try
         {
-            logD("stopService.");
+            LogHelper.logD("stopService.");
 
             // TODO: Release your stuffs here
             if(mNotificationManager != null)
@@ -192,23 +157,29 @@ public class ForegroundService extends Service {
                 mNotificationManager = null;
             }
 
-            if(sensorManager != null && sensorEventCallback != null)
-            {
-                sensorManager.unregisterListener(sensorEventCallback);
-                proximitySensor = null;
-                sensorManager = null;
-            }
+            proximitySensorModule.stop();
+            dwDistanceScanTrigger.stop();
 
             stopForeground(true);
-            logD("stopService:Service stopped without error.");
+            LogHelper.logD("stopService:Service stopped without error.");
         }
         catch(Exception e)
         {
-            logD("Error while stopping service.");
+            LogHelper.logD("Error while stopping service.");
             e.printStackTrace();
 
         }
 
+    }
+
+    protected static ProximitySensorModule getProximitySensorModule()
+    {
+        return proximitySensorModule;
+    }
+
+    protected static DWDistanceScanTrigger getDwDistanceScanTrigger()
+    {
+        return dwDistanceScanTrigger;
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -220,12 +191,7 @@ public class ForegroundService extends Service {
         notificationManager.createNotificationChannel(channel);
         return getString(R.string.foreground_service_channel_id);
     }
-
-    private void logD(String message)
-    {
-        Log.d(Constants.TAG, message);
-    }
-
+    
     public static void startService(Context context)
     {
         Intent myIntent = new Intent(context, ForegroundService.class);

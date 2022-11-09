@@ -21,6 +21,7 @@ public class SetupServiceBroadcastReceiver extends BroadcastReceiver {
             setSharedPreference(context, Constants.SHARED_PREFERENCES_START_SERVICE_ON_BOOT, bStartOnBoot);
             // Update GUI if necessary
             MainActivity.updateGUISwitchesIfNecessary();
+            SetupActivity.updateGUIfNecessary();
         }
         else
         {
@@ -46,6 +47,7 @@ public class SetupServiceBroadcastReceiver extends BroadcastReceiver {
             }
             // Update GUI if necessary
             MainActivity.updateGUISwitchesIfNecessary();
+            SetupActivity.updateGUIfNecessary();
         }
         else
         {

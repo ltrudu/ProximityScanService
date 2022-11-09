@@ -6,6 +6,9 @@ import android.content.SharedPreferences;
 import android.os.BatteryManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -15,8 +18,7 @@ import android.widget.Toast;
 // Copyright Zebra Technologies 2019.
 // See included licence for details
 //
-// Original code: Pietro Maggi
-// Rewrite + Fixes for Oreo: Laurent Trudu
+// Original code: Laurent Trudu
 //
 //
 // The service can be launched using the graphical user interface, intent actions or adb.
@@ -51,8 +53,7 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity {
 
     private Switch mStartStopServiceSwitch = null;
-    private Switch mAutoStartServiceOnBootSwitch = null;
-    private Switch mAutoStartServiceOnCraddleSwitch = null;
+
     public static MainActivity mMainActivity;
 
     @Override
@@ -74,14 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        ((Button)findViewById(R.id.btLicense)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ltrudu/NoSleepService/blob/master/README.md"));
-                Intent myIntent = new Intent(MainActivity.this, LicenceActivity.class);
-                startActivity(myIntent);
-            }
-        });
 
         mStartStopServiceSwitch = (Switch)findViewById(R.id.startStopServiceSwitch);
         mStartStopServiceSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -102,54 +95,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mAutoStartServiceOnBootSwitch = (Switch)findViewById(R.id.startOnBootSwitch);
-        mAutoStartServiceOnBootSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                {
-                    mAutoStartServiceOnBootSwitch.setText(getString(R.string.startOnBoot));
-                }
-                else
-                {
-                    mAutoStartServiceOnBootSwitch.setText(getString(R.string.doNothingOnBoot));
-                }
-                SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedpreferences.edit();
-                editor.putBoolean(Constants.SHARED_PREFERENCES_START_SERVICE_ON_BOOT, isChecked);
-                editor.commit();
-            }
-        });
-
-        mAutoStartServiceOnCraddleSwitch = (Switch)findViewById(R.id.startOnCraddle);
-        mAutoStartServiceOnCraddleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                {
-                    mAutoStartServiceOnCraddleSwitch.setText(getString(R.string.startOnCharging));
-                    // Launch the watcher service
-                    if(!PowerEventsWatcherService.isRunning(MainActivity.this))
-                        PowerEventsWatcherService.startService(MainActivity.this);
-                    // Let's check if we are already connected on power to launch ForegroundService if necessary
-                    BatteryManager myBatteryManager = (BatteryManager) MainActivity.this.getSystemService(Context.BATTERY_SERVICE);
-                    if(myBatteryManager.isCharging() && !ForegroundService.isRunning(MainActivity.this))
-                        ForegroundService.startService(MainActivity.this);
-                }
-                else
-                {
-                    mAutoStartServiceOnCraddleSwitch.setText(getString(R.string.doNothingOnCharging));
-                    // Stop the watcher service
-                    if(PowerEventsWatcherService.isRunning(MainActivity.this))
-                        PowerEventsWatcherService.stopService(MainActivity.this);
-                }
-                SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedpreferences.edit();
-                editor.putBoolean(Constants.SHARED_PREFERENCES_START_SERVICE_ON_CHARGING, isChecked);
-                editor.commit();
-            }
-        });
-
         updateSwitches();
         launchPowerEventsWatcherServiceIfNecessary();
     }
@@ -160,6 +105,30 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         updateSwitches();
         launchPowerEventsWatcherServiceIfNecessary();
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater findMenuItems = getMenuInflater();
+        findMenuItems.inflate(R.menu.mainactivitymenu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuitem_setup:
+                if(ZebraDeviceHelper.isZebraDevice(this)) {
+                    startActivity(new Intent(MainActivity.this, SetupActivity.class));
+                }
+                else
+                {
+                    Toast.makeText(this, getString(R.string.text_onlyzebra), Toast.LENGTH_LONG).show();
+                }
+                break;
+            case R.id.menuitem_license:
+                startActivity(new Intent(MainActivity.this, LicenceActivity.class));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void updateSwitches()
@@ -175,13 +144,6 @@ public class MainActivity extends AppCompatActivity {
                 {
                     setServiceStartedSwitchValues(false, getString(R.string.serviceStopped));
                 }
-
-                SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-                boolean startServiceOnBoot = sharedpreferences.getBoolean(Constants.SHARED_PREFERENCES_START_SERVICE_ON_BOOT, false);
-                setAutoStartServiceOnBootSwitch(startServiceOnBoot, startServiceOnBoot ? getString(R.string.startOnBoot) : getString(R.string.doNothingOnBoot));
-
-                boolean startServiceOnCharging = sharedpreferences.getBoolean(Constants.SHARED_PREFERENCES_START_SERVICE_ON_CHARGING, false);
-                setAutoStartServiceOnChargingSwitch(startServiceOnCharging, startServiceOnCharging ? getString(R.string.startOnCharging) : getString(R.string.doNothingOnCharging));
             }
         });
 
@@ -216,19 +178,6 @@ public class MainActivity extends AppCompatActivity {
         mStartStopServiceSwitch.setChecked(checked);
         mStartStopServiceSwitch.setText(text);
     }
-
-    private void setAutoStartServiceOnBootSwitch(final boolean checked, final String text)
-    {
-        mAutoStartServiceOnBootSwitch.setChecked(checked);
-        mAutoStartServiceOnBootSwitch.setText(text);
-    }
-
-    private void setAutoStartServiceOnChargingSwitch(final boolean checked, final String text)
-    {
-        mAutoStartServiceOnCraddleSwitch.setChecked(checked);
-        mAutoStartServiceOnCraddleSwitch.setText(text);
-    }
-
 
     public static void updateGUISwitchesIfNecessary()
     {

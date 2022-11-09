@@ -7,7 +7,7 @@
     <string name="serviceStarted">Service is running</string>
     <string name="startOnBoot">Start on boot</string>
     <string name="doNothingOnBoot">Do nothing on boot</string>
-    <string name="startOnCharging">Start when charging \nStop when not charging</string>
+    <string name="startOnCharging">Start when charging/powered \nStop when not charging</string>
     <string name="doNothingOnCharging">Power events not\nmonitored</string>
     <string name="foreground_service_channel_name">Proximity Scan Service</string>
     <string name="foreground_service_channel_id">Proximity Scan Service channel</string>
@@ -17,5 +17,6 @@
     <string name="powereventswatcherservice_notification_title">Proximity Scan Service Power Events Watcher</string>
     <string name="powereventswatcherservice_notification_text">A service that watch for power events (docked, charging) to start or stop Proximity Scan Service.</string>
     <string name="powereventswatcherservice_notification_tickle">Proximity ScanService Power Events Watcher</string>
+    <string name="text_onlyzebra">This software only runs on Zebra Devices.\nContact your local Zebra office for more information.\nwww.zebra.com</string>
 
 </resources>

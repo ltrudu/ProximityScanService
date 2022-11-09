@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SetupActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/txtSensorType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Select sensor from spinner:"
+            android:textSize="24sp"
+            android:visibility="visible"/>
+        <Spinner
+            android:id="@+id/spSensorType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtSensorType"
+            />
+
+        <Switch
+            android:id="@+id/swStartStopServiceSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Start Service"
+            android:layout_below="@+id/spSensorType"
+            android:textSize="24sp" />
+    <Switch
+        android:id="@+id/swStartOnBootSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/swStartStopServiceSwitch"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:text="Auto-start after reboot"
+        android:textSize="24sp" />
+
+        <Switch
+            android:id="@+id/swStartOnCraddle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/swStartOnBootSwitch"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Start on craddle"
+            android:textSize="24sp"
+            android:visibility="visible" />
+
+
+        <TextView
+            android:id="@+id/txtTriggerWhen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Trigger sensor when :"
+            android:textSize="24sp"
+            android:layout_below="@+id/swStartOnCraddle"
+            android:visibility="visible"/>
+        <Spinner
+            android:id="@+id/spTriggerWhen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtTriggerWhen"
+            />
+
+        <TextView
+            android:id="@+id/txtProximityMinDistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/spTriggerWhen"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Distance Trigger:"
+            android:textSize="24sp"
+            android:visibility="visible" />
+
+        <SeekBar
+            android:id="@+id/sbMinDistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtProximityMinDistance" />
+
+        <TextView
+            android:id="@+id/txtProximityCurrentDistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sbMinDistance"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Current Distance:"
+            android:textSize="24sp"
+            android:visibility="visible" />
+
+        <SeekBar
+            android:id="@+id/sbCurrentDistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtProximityCurrentDistance"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/txtProximityStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sbCurrentDistance"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Out of field"
+            android:textSize="24sp"
+            android:visibility="visible" />
+
+    </RelativeLayout>
+</ScrollView>

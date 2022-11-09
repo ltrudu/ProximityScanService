@@ -12,5 +12,6 @@ public class StopServiceBroadcastReceiver extends BroadcastReceiver {
         // Stop service
         ForegroundService.stopService(context);
         MainActivity.updateGUISwitchesIfNecessary();
+        SetupActivity.updateGUIfNecessary();
     }
 }

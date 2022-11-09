@@ -13,5 +13,6 @@ public class StartServiceBroadcastReceiver extends BroadcastReceiver {
         // Start service
         ForegroundService.startService(context);
         MainActivity.updateGUISwitchesIfNecessary();
+        SetupActivity.updateGUIfNecessary();
     }
 }
