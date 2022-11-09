@@ -1,8 +1,7 @@
  Copyright Zebra Technologies 2019.
  Licence available in the application main screen for details
 
- Original code: Pietro Maggi
- Rewrite + Fixes for Oreo: Laurent Trudu
+ Original code: Laurent Trudu
 
 
  The service can be launched using the graphical user interface, intent actions or adb.
