@@ -258,11 +258,13 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
         {
             ForegroundService.getProximitySensorModule().debugInterfaceCallback = SetupActivity.this;
             ForegroundService.getDWActionProcessor().debugInterfaceCallback = SetupActivity.this;
+            ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = SetupActivity.this;
         }
         else
         {
             ForegroundService.getProximitySensorModule().debugInterfaceCallback = null;
             ForegroundService.getDWActionProcessor().debugInterfaceCallback = null;
+            ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = null;
         }
     }
 
@@ -393,7 +395,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
             setServiceStartedSwitchValues(false, getString(R.string.serviceStopped));
         }
         mSensorTypeSpinner.setEnabled(!bServiceIsRunning);
-        mTriggerActionWhenSpinner.setEnabled(!bServiceIsRunning);
+        mActionToTriggerSpinner.setEnabled(!bServiceIsRunning);
         mCurrentDistanceTextView.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);
         mCurrentDistanceSeekBar.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);
         mProximityStatus.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);

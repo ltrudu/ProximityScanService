@@ -41,6 +41,7 @@ public class DistanceTriggerProcessor implements ProximitySensorModule.Proximity
     protected Context context;
     protected float reference_distance = 100;
     protected EDistanceComparator eDistanceComparator = EDistanceComparator.SUPERIOR_TO_REF;
+
     protected static DistanceTriggerDebugInterface debugInterfaceCallback = null;
 
     protected interface IDistanceTriggerProcessorInterface
