@@ -7,11 +7,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventCallback;
 import android.hardware.SensorManager;
 
-import com.zebra.datawedgeprofileintents.DWProfileBaseSettings;
-import com.zebra.datawedgeprofileintents.DWProfileCommandBase;
-import com.zebra.datawedgeprofileintents.DWScannerStartScan;
-import com.zebra.datawedgeprofileintents.DWScannerStopScan;
-
 import java.util.List;
 
 import static android.content.Context.SENSOR_SERVICE;
@@ -108,7 +103,7 @@ public class ProximitySensorModule {
     {
         List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);
         SharedPreferences sharedpreferences = context.getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-        String sensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+        String sensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
 
         for(Sensor sensor : list)
         {

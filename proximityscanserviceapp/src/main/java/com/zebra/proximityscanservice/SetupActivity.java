@@ -22,7 +22,7 @@ import java.util.Map;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class SetupActivity extends AppCompatActivity implements ProximitySensorModule.ProximitySensorModuleCallback, DWDistanceScanTrigger.DWDistanceScanTriggerDebugInterface {
+public class SetupActivity extends AppCompatActivity implements ProximitySensorModule.ProximitySensorModuleCallback, DistanceTriggerProcessor.DistanceTriggerDebugInterface {
 
     private Switch mStartStopServiceSwitch = null;
     private Switch mAutoStartServiceOnBootSwitch = null;
@@ -34,7 +34,10 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
     private SeekBar mCurrentDistanceSeekBar = null;
     private TextView mProximityStatus = null;
     private Spinner mSensorTypeSpinner = null;
-    private ArrayAdapter mAdapter = null;
+    private Spinner mTriggerActionWhenSpinner = null;
+    private Spinner mActionToTriggerSpinner = null;
+
+    private ArrayAdapter mSensorNamesAdapter = null;
     private Map<String, Integer> mSensorNames = null;
     private int mSeekBarsMaxRange = 1000;
 
@@ -66,9 +69,66 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
 
         mSensorTypeSpinner = (Spinner)findViewById(R.id.spSensorType);
 
-        populateSensorNames();
+        mActionToTriggerSpinner = (Spinner)findViewById(R.id.spTriggerAction);
+        mTriggerActionWhenSpinner = (Spinner)findViewById(R.id.spTriggerWhen);
+
+        populateSpinners();
 
         updateGuiInternal();
+
+        mActionToTriggerSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String actionSelected = adapterView.getItemAtPosition(i).toString();
+                SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedpreferences.edit();
+                editor.putString(Constants.SHARED_PREFERENCES_ACTION_TYPE, actionSelected);
+                editor.commit();
+                {
+                    DWActionProcessor.EDatawedgeAction eDatawedgeAction = DWActionProcessor.EDatawedgeAction.fromString(actionSelected);
+                    if(ForegroundService.isRunning(SetupActivity.this))
+                    {
+                        DWActionProcessor dwActionProcessor = ForegroundService.getDWActionProcessor();
+                        if(dwActionProcessor != null)
+                        {
+                            dwActionProcessor.setDatawedgeAction(eDatawedgeAction);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        mTriggerActionWhenSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String triggerTypeSelected = adapterView.getItemAtPosition(i).toString();
+                SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedpreferences.edit();
+                editor.putString(Constants.SHARED_PREFERENCES_TRIGGER_TYPE, triggerTypeSelected);
+                editor.commit();
+                {
+                    DistanceTriggerProcessor.EDistanceComparator eDistanceComparator = DistanceTriggerProcessor.EDistanceComparator.fromString(triggerTypeSelected);
+                    if(ForegroundService.isRunning(SetupActivity.this))
+                    {
+                        DistanceTriggerProcessor distanceTriggerProcessor = ForegroundService.getDistanceTriggerProcessor();
+                        if(distanceTriggerProcessor != null)
+                        {
+                            distanceTriggerProcessor.setDistanceComparator(eDistanceComparator);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
         mSensorTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -91,7 +151,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
             public void onNothingSelected(AdapterView<?> adapterView) {
                 SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedpreferences.edit();
-                editor.putString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+                editor.putString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
                 editor.commit();
             }
         });
@@ -101,7 +161,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 currentProgress = i;
-                mMinDistanceTextView.setText("Min distance before action: " + currentProgress);
+                mMinDistanceTextView.setText("Reference Distance: " + currentProgress);
             }
 
             @Override
@@ -117,10 +177,10 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
                 editor.commit();
                 if(ForegroundService.isRunning(SetupActivity.this))
                 {
-                    DWDistanceScanTrigger distanceScanTrigger = ForegroundService.getDwDistanceScanTrigger();
-                    if(distanceScanTrigger != null)
+                    DistanceTriggerProcessor distanceTriggerProcessor = ForegroundService.getDistanceTriggerProcessor();
+                    if(distanceTriggerProcessor != null)
                     {
-                        distanceScanTrigger.setMinDistance(currentProgress);
+                        distanceTriggerProcessor.setReferenceDistance(currentProgress);
                     }
                 }
                 mMinDistanceTextView.setText("Min distance before action: " + currentProgress);
@@ -197,18 +257,18 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
         if(isRunning)
         {
             ForegroundService.getProximitySensorModule().debugInterfaceCallback = SetupActivity.this;
-            ForegroundService.getDwDistanceScanTrigger().debugInterfaceCallback = SetupActivity.this;
+            ForegroundService.getDWActionProcessor().debugInterfaceCallback = SetupActivity.this;
         }
         else
         {
             ForegroundService.getProximitySensorModule().debugInterfaceCallback = null;
-            ForegroundService.getDwDistanceScanTrigger().debugInterfaceCallback = null;
+            ForegroundService.getDWActionProcessor().debugInterfaceCallback = null;
         }
     }
 
-    private void populateSensorNames() {
+    private void populateSpinners() {
         SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-        String sensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+        String sensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
 
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if(sensorManager != null)
@@ -216,9 +276,9 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
             int elementToSelect = 0;
             String sensorNameToSelect = "";
             mSensorNames = new HashMap<>();
-            mSensorNames.put(Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME, 0);
+            mSensorNames.put(Constants.SHARED_PREFERENCES_UNSELECTED, 0);
             List<String> orderedSensorNames = new ArrayList<>();
-            orderedSensorNames.add(Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+            orderedSensorNames.add(Constants.SHARED_PREFERENCES_UNSELECTED);
             int index = 1;
             // Populate with proximity sensors
             List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_PROXIMITY);
@@ -248,9 +308,9 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
                 }
             }
             if(orderedSensorNames.size() > 0) {
-                mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, orderedSensorNames);
-                mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                mSensorTypeSpinner.setAdapter(mAdapter);
+                mSensorNamesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, orderedSensorNames);
+                mSensorNamesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                mSensorTypeSpinner.setAdapter(mSensorNamesAdapter);
                 mSensorTypeSpinner.setSelection(elementToSelect);
                 if(elementToSelect > 0)
                 {
@@ -259,6 +319,43 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
                     mCurrentDistanceSeekBar.setMax(mSeekBarsMaxRange);
                 }
             }
+        }
+
+
+        ArrayList<String> triggerActionTypeList = new ArrayList<String>(){{
+            //add(Constants.SHARED_PREFERENCES_UNSELECTED);
+            add(DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
+            add(DWActionProcessor.EDatawedgeAction.ENABLE_DISABLE_DATAWEDGE.toString());
+        }};
+        ArrayAdapter<String> actionTypeAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, triggerActionTypeList);
+        actionTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mActionToTriggerSpinner.setAdapter(actionTypeAdapter);
+        String dwAction = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
+        if(dwAction.equalsIgnoreCase(DWActionProcessor.EDatawedgeAction.ENABLE_DISABLE_DATAWEDGE.toString()))
+        {
+            mActionToTriggerSpinner.setSelection(1);
+        }
+        else
+        {
+            mActionToTriggerSpinner.setSelection(0);
+        }
+
+        ArrayList<String> actionWhenList = new ArrayList<String>(){{
+            //add(Constants.SHARED_PREFERENCES_UNSELECTED);
+            add(DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF.toString());
+            add(DistanceTriggerProcessor.EDistanceComparator.INFERIOR_TO_REF.toString());
+        }};
+        ArrayAdapter<String> whenAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, actionWhenList);
+        whenAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mTriggerActionWhenSpinner.setAdapter(whenAdapter);
+        String triggerType = sharedpreferences.getString(Constants.SHARED_PREFERENCES_TRIGGER_TYPE, DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF.toString());
+        if(triggerType.equalsIgnoreCase(DistanceTriggerProcessor.EDistanceComparator.INFERIOR_TO_REF.toString()))
+        {
+            mTriggerActionWhenSpinner.setSelection(1);
+        }
+        else
+        {
+            mTriggerActionWhenSpinner.setSelection(0);
         }
     }
 
@@ -296,6 +393,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
             setServiceStartedSwitchValues(false, getString(R.string.serviceStopped));
         }
         mSensorTypeSpinner.setEnabled(!bServiceIsRunning);
+        mTriggerActionWhenSpinner.setEnabled(!bServiceIsRunning);
         mCurrentDistanceTextView.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);
         mCurrentDistanceSeekBar.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);
         mProximityStatus.setVisibility(bServiceIsRunning ? View.VISIBLE : View.GONE);
@@ -311,7 +409,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
         {
             sensorIndex = 0;
         }
-        if(sensorIndex < mAdapter.getCount())
+        if(sensorIndex < mSensorNamesAdapter.getCount())
         {
             mSensorTypeSpinner.setSelection(sensorIndex);
         }
@@ -330,7 +428,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
                 setAutoStartServiceOnPowerEventSwitch(startServicePowerEvents);
                 int minDistance = sharedpreferences.getInt(Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE, Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE);
                 mMinDistanceSeekBar.setProgress(minDistance);
-                String selectedSensor = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+                String selectedSensor = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
                 selectSensor(selectedSensor);
             }
         });
@@ -350,7 +448,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
     }
 
     @Override
-    public void onTriggerStart() {
+    public void onInsideZone(final String triggerType) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -361,7 +459,7 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
     }
 
     @Override
-    public void onTriggerStop() {
+    public void onOutsideZone(final String triggerType) {
          runOnUiThread(new Runnable() {
             @Override
             public void run() {

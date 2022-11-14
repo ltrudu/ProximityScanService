@@ -65,13 +65,13 @@
             android:id="@+id/txtTriggerWhen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/swStartOnCraddle"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="20dp"
             android:layout_marginRight="10dp"
             android:text="Trigger sensor when :"
             android:textSize="24sp"
-            android:layout_below="@+id/swStartOnCraddle"
-            android:visibility="visible"/>
+            android:visibility="visible" />
         <Spinner
             android:id="@+id/spTriggerWhen"
             android:layout_width="match_parent"
@@ -80,10 +80,28 @@
             />
 
         <TextView
+            android:id="@+id/txtTriggerAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
+            android:text="Trigger action :"
+            android:textSize="24sp"
+            android:layout_below="@+id/spTriggerWhen"
+            android:visibility="visible"/>
+        <Spinner
+            android:id="@+id/spTriggerAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtTriggerAction"
+            />
+
+        <TextView
             android:id="@+id/txtProximityMinDistance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/spTriggerWhen"
+            android:layout_below="@+id/spTriggerAction"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="20dp"
             android:layout_marginRight="10dp"

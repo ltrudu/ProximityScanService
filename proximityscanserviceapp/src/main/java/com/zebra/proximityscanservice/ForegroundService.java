@@ -10,25 +10,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventCallback;
-import android.hardware.SensorManager;
-import android.media.AudioTrack;
-import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.IBinder;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
-import android.util.Log;
-
-import com.zebra.datawedgeprofileintents.DWProfileBaseSettings;
-import com.zebra.datawedgeprofileintents.DWProfileCommandBase;
-import com.zebra.datawedgeprofileintents.DWScannerStartScan;
-import com.zebra.datawedgeprofileintents.DWScannerStopScan;
-
-import java.util.List;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
@@ -39,10 +25,15 @@ public class ForegroundService extends Service {
     private NotificationManager mNotificationManager = null;
     private Notification mNotification = null;
     private static ProximitySensorModule proximitySensorModule = null;
-    private static DWDistanceScanTrigger dwDistanceScanTrigger = null;
+    //private static DWDistanceScanTrigger dwDistanceScanTrigger = null;
+
+    private static DWActionProcessor dwActionProcessor = null;
+    private static DistanceTriggerProcessor distanceTriggerProcessor = null;
 
     private String mSensorName = null;
     private int mProximityMinDistance = Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE;
+    private DWActionProcessor.EDatawedgeAction eDatawedgeAction = DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP;
+    private DistanceTriggerProcessor.EDistanceComparator eDistanceComparator = DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF;
 
     public ForegroundService() {
     }
@@ -111,16 +102,42 @@ public class ForegroundService extends Service {
             SharedPreferences sharedpreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
             mProximityMinDistance = sharedpreferences.getInt(Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE, Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE);
-            if(dwDistanceScanTrigger == null)
+
+            String dwaction = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
+            eDatawedgeAction = DWActionProcessor.EDatawedgeAction.fromString(dwaction);
+            if(dwActionProcessor == null)
             {
-                dwDistanceScanTrigger = new DWDistanceScanTrigger(this, mProximityMinDistance);
+                dwActionProcessor = new DWActionProcessor(this, eDatawedgeAction);
             }
             else
             {
-                dwDistanceScanTrigger.setMinDistance(mProximityMinDistance);
+                dwActionProcessor.setDatawedgeAction(eDatawedgeAction);
             }
 
-           mSensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED_SENSOR_NAME);
+            String triggerType = sharedpreferences.getString(Constants.SHARED_PREFERENCES_TRIGGER_TYPE, DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF.toString());
+            eDistanceComparator = DistanceTriggerProcessor.EDistanceComparator.fromString(triggerType);
+            if(distanceTriggerProcessor == null)
+            {
+                distanceTriggerProcessor = new DistanceTriggerProcessor(this, (float)mProximityMinDistance, eDistanceComparator, dwActionProcessor);
+            }
+            else
+            {
+                distanceTriggerProcessor.setReferenceDistance((float)mProximityMinDistance);
+                distanceTriggerProcessor.setTriggerProcessor(dwActionProcessor);
+                distanceTriggerProcessor.setDistanceComparator(eDistanceComparator);
+            }
+
+
+            //if(dwDistanceScanTrigger == null)
+            //{
+            //    dwDistanceScanTrigger = new DWDistanceScanTrigger(this, mProximityMinDistance);
+            //}
+            //else
+            //{
+            //    dwDistanceScanTrigger.setMinDistance(mProximityMinDistance);
+            //}
+
+           mSensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
 
             if(proximitySensorModule != null)
             {
@@ -130,10 +147,10 @@ public class ForegroundService extends Service {
             }
 
             if(proximitySensorModule == null)
-                proximitySensorModule = new ProximitySensorModule(this, mSensorName, dwDistanceScanTrigger);
+                proximitySensorModule = new ProximitySensorModule(this, mSensorName, distanceTriggerProcessor);
 
             proximitySensorModule.start();
-            dwDistanceScanTrigger.start();
+            dwActionProcessor.start();
 
             LogHelper.logD("startService:Service started without error.");
         }
@@ -158,7 +175,7 @@ public class ForegroundService extends Service {
             }
 
             proximitySensorModule.stop();
-            dwDistanceScanTrigger.stop();
+            dwActionProcessor.stop();
 
             stopForeground(true);
             LogHelper.logD("stopService:Service stopped without error.");
@@ -177,9 +194,14 @@ public class ForegroundService extends Service {
         return proximitySensorModule;
     }
 
-    protected static DWDistanceScanTrigger getDwDistanceScanTrigger()
+    protected static DistanceTriggerProcessor getDistanceTriggerProcessor()
     {
-        return dwDistanceScanTrigger;
+        return distanceTriggerProcessor;
+    }
+
+    protected static DWActionProcessor getDWActionProcessor()
+    {
+        return dwActionProcessor;
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

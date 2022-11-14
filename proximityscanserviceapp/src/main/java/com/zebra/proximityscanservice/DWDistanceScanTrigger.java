@@ -14,12 +14,7 @@ public class DWDistanceScanTrigger implements ProximitySensorModule.ProximitySen
     private float distance_to_trigger_event = 100;
     private SC_S_SCANNER_STATUS eStatus = SC_S_SCANNER_STATUS.DISABLED;
 
-    protected interface DWDistanceScanTriggerDebugInterface
-    {
-        void onTriggerStart();
-        void onTriggerStop();
-    }
-    protected static DWDistanceScanTriggerDebugInterface debugInterfaceCallback = null;
+    protected static DistanceTriggerProcessor.DistanceTriggerDebugInterface debugInterfaceCallback = null;
     /*
     Scanner status checker
      */
@@ -55,7 +50,7 @@ public class DWDistanceScanTrigger implements ProximitySensorModule.ProximitySen
         if(distance > distance_to_trigger_event ) {
             if(debugInterfaceCallback != null)
             {
-                debugInterfaceCallback.onTriggerStart();
+                debugInterfaceCallback.onInsideZone(DWDistanceScanTrigger.class.getTypeName());
             }
             if(eStatus != SC_S_SCANNER_STATUS.SCANNING)
                 DWHelper.StartScan(context);
@@ -64,7 +59,7 @@ public class DWDistanceScanTrigger implements ProximitySensorModule.ProximitySen
         {
             if(debugInterfaceCallback != null)
             {
-                debugInterfaceCallback.onTriggerStop();
+                debugInterfaceCallback.onOutsideZone(DWDistanceScanTrigger.class.getTypeName());
             }
             if(eStatus == SC_S_SCANNER_STATUS.SCANNING)
                 DWHelper.StopScan(context);
