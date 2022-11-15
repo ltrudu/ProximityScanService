@@ -15,9 +15,6 @@ Can be used on TCxx series to trigger a scan by putting the hand on top of the p
 
 Have fun with Zebra devices !!!
 
-
-Original code: Laurent Trudu
-
  The service can be launched using the graphical user interface, intent actions or adb.
 
  If the option "Start on boot" is enabled, the service will be automatically launched when the boot is complete.
