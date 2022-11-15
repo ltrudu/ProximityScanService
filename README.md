@@ -3,9 +3,18 @@ See below for licence details
 
 ## Proximity Scan Service
 
-A service that uses the proximity sensor of a device to trigger a DataWedge action depending on a user selected distance value.
+How to trigger a scan without user interaction.
+Only based on the distance between the user and the device.
 
-See Setup menu entry in the first activity for more information.
+ProximityScanService is a service that uses the proximity sensor of a Zebra device to trigger a DataWedge action (start/stop scan, enable/disable Datawedge) depending on the distance between the device and a detected user/object.
+
+Sensor, reference distance, Datawedge action type and trigger type can be user selected in the app settings activity that you'll find in the main activity menu (trigger type defines if the current distance needs to be inferior or superior to the user defined distance).
+
+Works pretty well on CC600 even in full dark environment.
+Can be used on TCxx series to trigger a scan by putting the hand on top of the proximity sensor (without touching the screen or user interaction).
+
+Have fun with Zebra devices !!!
+
 
 Original code: Laurent Trudu
 
