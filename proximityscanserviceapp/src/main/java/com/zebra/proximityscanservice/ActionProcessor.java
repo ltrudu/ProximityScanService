@@ -8,7 +8,7 @@ import com.zebra.datawedgeprofileintents.DWStatusScannerCallback;
 import com.zebra.datawedgeprofileintents.DWStatusScannerSettings;
 import com.zebra.datawedgeprofileintents.DataWedgeConstants;
 
-public class DWActionProcessor implements DistanceTriggerProcessor.IDistanceTriggerProcessorInterface {
+public class ActionProcessorDataWedge implements DistanceTriggerProcessor.IDistanceTriggerProcessorInterface {
 
     protected enum EDatawedgeAction
     {
@@ -48,7 +48,7 @@ public class DWActionProcessor implements DistanceTriggerProcessor.IDistanceTrig
 
     protected static DistanceTriggerProcessor.DistanceTriggerDebugInterface debugInterfaceCallback = null;
 
-    public DWActionProcessor(Context context, EDatawedgeAction eDatawedgeAction)
+    public ActionProcessorDataWedge(Context context, EDatawedgeAction eDatawedgeAction)
     {
         this.context = context;
         this.eDatawedgeAction = eDatawedgeAction;
