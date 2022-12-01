@@ -84,15 +84,11 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
                 SharedPreferences.Editor editor = sharedpreferences.edit();
                 editor.putString(Constants.SHARED_PREFERENCES_ACTION_TYPE, actionSelected);
                 editor.commit();
-                {
-                    DWActionProcessor.EDatawedgeAction eDatawedgeAction = DWActionProcessor.EDatawedgeAction.fromString(actionSelected);
-                    if(ForegroundService.isRunning(SetupActivity.this))
-                    {
-                        DWActionProcessor dwActionProcessor = ForegroundService.getDWActionProcessor();
-                        if(dwActionProcessor != null)
-                        {
-                            dwActionProcessor.setDatawedgeAction(eDatawedgeAction);
-                        }
+                ActionProcessor.EActionProcessorType eActionProcessorType = ActionProcessor.EActionProcessorType.fromString(actionSelected);
+                if (ForegroundService.isRunning(SetupActivity.this)) {
+                    ActionProcessor actionProcessor = ForegroundService.getActionProcessor();
+                    if (actionProcessor != null) {
+                        actionProcessor.setActionType(eActionProcessorType);
                     }
                 }
             }
@@ -256,15 +252,21 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
         boolean isRunning = ForegroundService.isRunning(SetupActivity.this);
         if(isRunning)
         {
-            ForegroundService.getProximitySensorModule().debugInterfaceCallback = SetupActivity.this;
-            ForegroundService.getDWActionProcessor().debugInterfaceCallback = SetupActivity.this;
-            ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = SetupActivity.this;
+            if(ForegroundService.getProximitySensorModule() != null)
+                ForegroundService.getProximitySensorModule().debugInterfaceCallback = SetupActivity.this;
+            if(ForegroundService.getActionProcessor() != null)
+                ForegroundService.getActionProcessor().debugInterfaceCallback = SetupActivity.this;
+            if(ForegroundService.getDistanceTriggerProcessor() != null)
+                ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = SetupActivity.this;
         }
         else
         {
-            ForegroundService.getProximitySensorModule().debugInterfaceCallback = null;
-            ForegroundService.getDWActionProcessor().debugInterfaceCallback = null;
-            ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = null;
+            if(ForegroundService.getProximitySensorModule() != null)
+                ForegroundService.getProximitySensorModule().debugInterfaceCallback = null;
+            if(ForegroundService.getActionProcessor() != null)
+                ForegroundService.getActionProcessor().debugInterfaceCallback = null;
+            if(ForegroundService.getDistanceTriggerProcessor() != null)
+                ForegroundService.getDistanceTriggerProcessor().debugInterfaceCallback = null;
         }
     }
 
@@ -326,20 +328,25 @@ public class SetupActivity extends AppCompatActivity implements ProximitySensorM
 
         ArrayList<String> triggerActionTypeList = new ArrayList<String>(){{
             //add(Constants.SHARED_PREFERENCES_UNSELECTED);
-            add(DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
-            add(DWActionProcessor.EDatawedgeAction.ENABLE_DISABLE_DATAWEDGE.toString());
+            add(ActionProcessor.EActionProcessorType.TRIGGER_START_STOP.toString());
+            add(ActionProcessor.EActionProcessorType.ENABLE_DISABLE_DATAWEDGE.toString());
+            add(ActionProcessor.EActionProcessorType.SEND_INTENT.toString());
         }};
         ArrayAdapter<String> actionTypeAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, triggerActionTypeList);
         actionTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mActionToTriggerSpinner.setAdapter(actionTypeAdapter);
-        String dwAction = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
-        if(dwAction.equalsIgnoreCase(DWActionProcessor.EDatawedgeAction.ENABLE_DISABLE_DATAWEDGE.toString()))
+        String actionType = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, ActionProcessor.EActionProcessorType.TRIGGER_START_STOP.toString());
+        ActionProcessor.EActionProcessorType actionProcessorType = ActionProcessor.EActionProcessorType.fromString(actionType);
+        switch(actionProcessorType)
         {
-            mActionToTriggerSpinner.setSelection(1);
-        }
-        else
-        {
-            mActionToTriggerSpinner.setSelection(0);
+            case TRIGGER_START_STOP:
+                mActionToTriggerSpinner.setSelection(0);
+                break;
+            case ENABLE_DISABLE_DATAWEDGE:
+                mActionToTriggerSpinner.setSelection(1);
+                break;
+            case SEND_INTENT:
+                mActionToTriggerSpinner.setSelection(2);
         }
 
         ArrayList<String> actionWhenList = new ArrayList<String>(){{

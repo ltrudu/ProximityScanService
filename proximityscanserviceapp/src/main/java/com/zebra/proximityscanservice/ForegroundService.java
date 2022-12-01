@@ -27,12 +27,12 @@ public class ForegroundService extends Service {
     private static ProximitySensorModule proximitySensorModule = null;
     //private static DWDistanceScanTrigger dwDistanceScanTrigger = null;
 
-    private static DWActionProcessor dwActionProcessor = null;
+    private static ActionProcessor actionProcessor = null;
     private static DistanceTriggerProcessor distanceTriggerProcessor = null;
 
     private String mSensorName = null;
     private int mProximityMinDistance = Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE;
-    private DWActionProcessor.EDatawedgeAction eDatawedgeAction = DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP;
+    private ActionProcessor.EActionProcessorType eActionProcessorType = ActionProcessor.EActionProcessorType.TRIGGER_START_STOP;
     private DistanceTriggerProcessor.EDistanceComparator eDistanceComparator = DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF;
 
     public ForegroundService() {
@@ -103,39 +103,29 @@ public class ForegroundService extends Service {
 
             mProximityMinDistance = sharedpreferences.getInt(Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE, Constants.SHARED_PREFERENCES_PROXIMITYMINDISTANCE_DEFAULTVALUE);
 
-            String dwaction = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, DWActionProcessor.EDatawedgeAction.TRIGGER_START_STOP.toString());
-            eDatawedgeAction = DWActionProcessor.EDatawedgeAction.fromString(dwaction);
-            if(dwActionProcessor == null)
+            String actionType = sharedpreferences.getString(Constants.SHARED_PREFERENCES_ACTION_TYPE, ActionProcessor.EActionProcessorType.TRIGGER_START_STOP.toString());
+            eActionProcessorType = ActionProcessor.EActionProcessorType.fromString(actionType);
+            if(actionProcessor == null)
             {
-                dwActionProcessor = new DWActionProcessor(this, eDatawedgeAction);
+                actionProcessor = new ActionProcessor(this, eActionProcessorType);
             }
             else
             {
-                dwActionProcessor.setDatawedgeAction(eDatawedgeAction);
+                actionProcessor.setActionType(eActionProcessorType);
             }
 
             String triggerType = sharedpreferences.getString(Constants.SHARED_PREFERENCES_TRIGGER_TYPE, DistanceTriggerProcessor.EDistanceComparator.SUPERIOR_TO_REF.toString());
             eDistanceComparator = DistanceTriggerProcessor.EDistanceComparator.fromString(triggerType);
             if(distanceTriggerProcessor == null)
             {
-                distanceTriggerProcessor = new DistanceTriggerProcessor(this, (float)mProximityMinDistance, eDistanceComparator, dwActionProcessor);
+                distanceTriggerProcessor = new DistanceTriggerProcessor(this, (float)mProximityMinDistance, eDistanceComparator, actionProcessor);
             }
             else
             {
                 distanceTriggerProcessor.setReferenceDistance((float)mProximityMinDistance);
-                distanceTriggerProcessor.setTriggerProcessor(dwActionProcessor);
+                distanceTriggerProcessor.setTriggerProcessor(actionProcessor);
                 distanceTriggerProcessor.setDistanceComparator(eDistanceComparator);
             }
-
-
-            //if(dwDistanceScanTrigger == null)
-            //{
-            //    dwDistanceScanTrigger = new DWDistanceScanTrigger(this, mProximityMinDistance);
-            //}
-            //else
-            //{
-            //    dwDistanceScanTrigger.setMinDistance(mProximityMinDistance);
-            //}
 
            mSensorName = sharedpreferences.getString(Constants.SHARED_PREFERENCES_SENSORNAME, Constants.SHARED_PREFERENCES_UNSELECTED);
 
@@ -150,7 +140,7 @@ public class ForegroundService extends Service {
                 proximitySensorModule = new ProximitySensorModule(this, mSensorName, distanceTriggerProcessor);
 
             proximitySensorModule.start();
-            dwActionProcessor.start();
+            actionProcessor.start();
 
             LogHelper.logD("startService:Service started without error.");
         }
@@ -175,7 +165,7 @@ public class ForegroundService extends Service {
             }
 
             proximitySensorModule.stop();
-            dwActionProcessor.stop();
+            actionProcessor.stop();
 
             stopForeground(true);
             LogHelper.logD("stopService:Service stopped without error.");
@@ -199,9 +189,9 @@ public class ForegroundService extends Service {
         return distanceTriggerProcessor;
     }
 
-    protected static DWActionProcessor getDWActionProcessor()
+    protected static ActionProcessor getActionProcessor()
     {
-        return dwActionProcessor;
+        return actionProcessor;
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
